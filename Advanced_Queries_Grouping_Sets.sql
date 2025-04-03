@@ -194,7 +194,11 @@ SELECT
     WHEN specialty_description IS NULL AND opioid_drug_flag IS NULL THEN 'Total'
     ELSE specialty_description
   END AS specialty_description,
-  opioid_drug_flag,
+  CASE 
+    WHEN specialty_description IS NOT NULL AND opioid_drug_flag IS NULL THEN 'Subtotal'
+    ELSE opioid_drug_flag
+  END AS opioid_drug_flag,
+ -- opioid_drug_flag,
   SUM(total_claim_count) AS total_claims
 FROM prescriber
 INNER JOIN prescription
@@ -205,13 +209,14 @@ WHERE specialty_description IN ('Interventional Pain Management', 'Pain Manageme
 GROUP BY CUBE(specialty_description, opioid_drug_flag)
 ORDER BY 
   CASE
-    WHEN specialty_description IS NULL AND opioid_drug_flag IS NULL THEN 1
-    WHEN specialty_description IS NULL THEN 2
-    WHEN opioid_drug_flag IS NULL THEN 3
-    ELSE 4
+    WHEN specialty_description IS NOT NULL AND opioid_drug_flag != 'Subtotal' THEN 1
+	WHEN specialty_description IS NOT NULL AND opioid_drug_flag = 'Subtotal' THEN 2    
+    WHEN specialty_description IS NULL AND opioid_drug_flag IS NOT NULL THEN 3
+	WHEN specialty_description = 'Total' THEN 4 
+	ELSE 5
   END,
   specialty_description,
-  opioid_drug_flag;
+  opioid_drug_flag DESC;
 
 
 
